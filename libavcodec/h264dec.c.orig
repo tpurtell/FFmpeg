@@ -320,8 +320,6 @@ static int h264_init_context(AVCodecContext *avctx, H264Context *h)
     h->sei.frame_packing.arrangement_cancel_flag = -1;
     h->sei.unregistered.x264_build = -1;
 
-    h->ref_frame_count = 0;
-
     h->next_outputed_poc = INT_MIN;
     for (i = 0; i < MAX_DELAYED_PIC_COUNT; i++)
         h->last_pocs[i] = INT_MIN;
@@ -640,13 +638,9 @@ static int decode_nal_units(H264Context *h, const uint8_t *buf, int buf_size)
         H2645NAL *nal = &h->pkt.nals[i];
         int max_slice_ctx, err;
 
-        if (avctx->skip_frame >= AVDISCARD_NONREF) {
-	    if(nal->ref_idc == 0 && nal->type != H264_NAL_SEI) {
-                continue;
-            } else if(h->ref_frame_count++ % avctx->frame_skip_factor != 0) {
-                continue;
-            }
-        }
+        if (avctx->skip_frame >= AVDISCARD_NONREF &&
+            nal->ref_idc == 0 && nal->type != H264_NAL_SEI)
+            continue;
 
         // FIXME these should stop being context-global variables
         h->nal_ref_idc   = nal->ref_idc;
