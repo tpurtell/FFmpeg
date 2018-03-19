@@ -641,12 +641,19 @@ static int decode_nal_units(H264Context *h, const uint8_t *buf, int buf_size)
         int max_slice_ctx, err;
 
         if (avctx->skip_frame >= AVDISCARD_NONREF) {
-	    if(nal->ref_idc == 0 && nal->type != H264_NAL_SEI) {
-                continue;
-            } else if(avctx->frame_skip_factor && h->ref_frame_count++ % avctx->frame_skip_factor != 0) {
-                continue;
+    	    if(nal->ref_idc == 0 && nal->type != H264_NAL_SEI) {
+                    continue;
+                }
             }
-        }
+    	if (avctx->skip_frame >= AVDISCARD_NONKEY) {
+    	    if(nal->type == H264_NAL_SLICE) {
+    		    continue; 
+    	    } else if(nal->type == H264_NAL_IDR_SLICE) {
+                if(avctx->frame_skip_factor && h->ref_frame_count++ % avctx->frame_skip_factor != 0) {
+            	     continue;
+                }
+    	    }
+    	}
 
         // FIXME these should stop being context-global variables
         h->nal_ref_idc   = nal->ref_idc;
